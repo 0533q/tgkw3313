@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D交互 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .model-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .model-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(139, 69, 19, 0.4);
+            border-color: #8B4513;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .model-card {
+            border: 3px dashed #8B4513;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 4px;
+            background: rgba(139, 69, 19, 0.05);
+            cursor: text;
+        }
+        
+        .edit-mode .delete-btn {
+            display: block;
+        }
+        
+        .edit-mode .edit-controls {
+            display: flex;
+        }
+        
+        .edit-controls {
+            display: none;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 10;
+        }
+        
+        .delete-btn {
+            display: none;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+        }
+        
+        .cover-upload-area {
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(139, 69, 19, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+        
+        .edit-mode .upload-overlay {
+            display: flex;
+        }
+        
+        .edit-mode .cover-upload-area:hover .upload-overlay {
+            background: rgba(139, 69, 19, 0.85);
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown editable hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600 editable">3D交互</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <button id="addModelBtn" class="btn-primary px-4 py-2 font-medium hidden">
+                        <i class="fa fa-plus mr-2"></i>添加模型
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-earth-brown mb-4" style="font-family: 'SimSun', 'STSong', serif;">
+                古代科技3D模型
+            </h2>
+            <p class="text-gray-600 text-lg">沉浸式学习体验，探索古代科技奥秘</p>
+            <div class="w-32 h-1 bg-earth-brown mx-auto mt-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="modelsGrid">
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <div id="addModelModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-earth-brown mb-4">添加3D模型</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">模型标题</label>
+                    <input type="text" id="newModelTitle" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入模型标题">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">封面图片</label>
+                    <input type="file" id="newModelCover" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">STL模型文件</label>
+                    <input type="file" id="newModelFile" accept=".stl" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">文字说明</label>
+                    <textarea id="newModelDescription" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="4" placeholder="请输入文字说明"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="cancelAddModel" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveAddModel" class="btn-primary px-4 py-2">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        
+        let editMode = false;
+        let models = [];
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadModels();
+            renderModels();
+        });
+        
+        function loadModels() {
+            const savedModels = localStorage.getItem('models');
+            if (savedModels) {
+                models = JSON.parse(savedModels);
+            } else {
+                models = [
+                    {
+                        id: 1,
+                        title: '古代水车',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ancient%20Chinese%20water%20wheel%2C%20traditional%20technology&image_size=landscape_4_3',
+                        model: '',
+                        description: '古代水车是中国古代重要的灌溉工具，利用水力驱动，能够将低处的水提升到高处，用于农田灌溉。'
+                    },
+                    {
+                        id: 2,
+                        title: '指南车',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ancient%20Chinese%20compass%20chariot%2C%20traditional%20technology&image_size=landscape_4_3',
+                        model: '',
+                        description: '指南车是中国古代的机械装置，能够指示方向，体现了古代工匠的智慧和机械制造水平。'
+                    },
+                    {
+                        id: 3,
+                        title: '浑天仪',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ancient%20Chinese%20armillary%20sphere%2C%20astronomy%20instrument&image_size=landscape_4_3',
+                        model: '',
+                        description: '浑天仪是中国古代重要的天文观测仪器，用于观测天体运动，体现了古代天文学的成就。'
+                    },
+                    {
+                        id: 4,
+                        title: '地动仪',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Ancient%20Chinese%20seismoscope%2C%20Zhang%20Heng%20invention&image_size=landscape_4_3',
+                        model: '',
+                        description: '地动仪是东汉张衡发明的地震监测仪器，能够检测地震的方向，是世界上最早的地震仪器。'
+                    }
+                ];
+                saveModels();
+            }
+        }
+        
+        function saveModels() {
+            localStorage.setItem('models', JSON.stringify(models));
+        }
+        
+        function renderModels() {
+            const grid = document.getElementById('modelsGrid');
+            grid.innerHTML = '';
+            
+            models.forEach(model => {
+                const card = document.createElement('div');
+                card.className = 'model-card relative';
+                card.innerHTML = `
+                    <button class="delete-btn btn-danger px-3 py-1 text-sm rounded" onclick="deleteModel(${model.id}, event)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <div class="edit-controls absolute top-2 left-2 z-10 flex gap-2">
+                        <label class="btn-primary px-2 py-1 text-xs rounded cursor-pointer">
+                            <i class="fa fa-upload"></i>
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadModelCover(${model.id}, this)">
+                        </label>
+                        <button class="btn-primary px-2 py-1 text-xs rounded" onclick="downloadModelCover(${model.id})">
+                            <i class="fa fa-download"></i>
+                        </button>
+                    </div>
+                    <div class="relative cover-upload-area" onclick="triggerCoverUpload(${model.id}, event)">
+                        <img src="${model.cover}" alt="${model.title}" class="w-full h-48 object-cover" id="cover-${model.id}">
+                        <div class="upload-overlay hidden">
+                            <i class="fa fa-upload text-4xl"></i>
+                            <p class="mt-2">点击上传封面</p>
+                        </div>
+                        <div class="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            <i class="fa fa-cube mr-1"></i>查看
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg text-earth-brown mb-2 editable" data-field="title" data-id="${model.id}">${model.title}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-2 editable" data-field="description" data-id="${model.id}">${model.description}</p>
+                    </div>
+                `;
+                
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.delete-btn') && !e.target.closest('.editable')) {
+                        window.open(`3d-detail.html?id=${model.id}`, '_blank');
+                    }
+                });
+                
+                grid.appendChild(card);
+            });
+            
+            setupEditableElements();
+        }
+        
+        function setupEditableElements() {
+            const editableElements = document.querySelectorAll('.editable');
+            editableElements.forEach(element => {
+                element.addEventListener('blur', function() {
+                    if (editMode) {
+                        const id = parseInt(this.dataset.id);
+                        const field = this.dataset.field;
+                        const value = this.textContent.trim();
+                        
+                        const model = models.find(m => m.id === id);
+                        if (model) {
+                            model[field] = value;
+                            saveModels();
+                        }
+                    }
+                });
+            });
+        }
+        
+        function triggerCoverUpload(id, event) {
+            if (editMode) {
+                event.preventDefault();
+                event.stopPropagation();
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = function(e) {
+                    uploadModelCover(id, e.target);
+                };
+                fileInput.click();
+            } else {
+                window.open(`3d-detail.html?id=${id}`, '_blank');
+            }
+        }
+        
+        async function uploadModelCover(id, input) {
+            const file = input.files[0];
+            if (file) {
+                try {
+                    console.log('开始上传封面图片...');
+                    
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    console.log('服务器响应状态:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('服务器响应:', result);
+                    
+                    if (result.success) {
+                        const model = models.find(m => m.id === id);
+                        if (model) {
+                            const newCoverUrl = `http://localhost:3000/uploads/${result.file.filename}`;
+                            model.cover = newCoverUrl;
+                            model.coverFilename = result.file.filename;
+                            saveModels();
+                            
+                            const coverImg = document.getElementById(`cover-${id}`);
+                            if (coverImg) {
+                                coverImg.src = newCoverUrl;
+                            }
+                            
+                            alert('封面已上传到服务器');
+                        }
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                } catch (error) {
+                    console.error('上传封面失败:', error);
+                    alert('上传封面失败: ' + error.message + '\n请确保服务器已启动（npm start）');
+                }
+                
+                input.value = '';
+            }
+        }
+        
+        function downloadModelCover(id) {
+            const model = models.find(m => m.id === id);
+            if (model && model.cover) {
+                const link = document.createElement('a');
+                link.href = model.cover;
+                link.download = `${model.title}_cover.png`;
+                link.click();
+            }
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            const addBtn = document.getElementById('addModelBtn');
+            const navTitle = document.querySelector('nav a');
+            const navSubtitle = document.querySelector('nav span');
+            const editableElements = document.querySelectorAll('.editable');
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+                addBtn.classList.remove('hidden');
+                editableElements.forEach(el => el.contentEditable = 'true');
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+                addBtn.classList.add('hidden');
+                editableElements.forEach(el => el.contentEditable = 'false');
+            }
+            
+            if (navTitle) {
+                navTitle.contentEditable = editMode;
+            }
+            if (navSubtitle) {
+                navSubtitle.contentEditable = editMode;
+            }
+        });
+        
+        document.getElementById('addModelBtn').addEventListener('click', function() {
+            document.getElementById('addModelModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('cancelAddModel').addEventListener('click', function() {
+            document.getElementById('addModelModal').classList.add('hidden');
+            clearAddModelForm();
+        });
+        
+        document.getElementById('saveAddModel').addEventListener('click', async function() {
+            const title = document.getElementById('newModelTitle').value.trim();
+            const coverInput = document.getElementById('newModelCover');
+            const modelInput = document.getElementById('newModelFile');
+            const localPathInput = document.getElementById('newModelLocalPath');
+            const description = document.getElementById('newModelDescription').value.trim();
+            
+            if (!title) {
+                alert('请输入模型标题');
+                return;
+            }
+            
+            const newModel = {
+                id: Date.now(),
+                title: title,
+                cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=' + encodeURIComponent(title) + '&image_size=landscape_4_3',
+                model: '',
+                description: description || '暂无说明'
+            };
+            
+            try {
+                if (coverInput.files[0]) {
+                    const formData = new FormData();
+                    formData.append('image', coverInput.files[0]);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        newModel.cover = `http://localhost:3000/uploads/${result.file.filename}`;
+                        newModel.coverFilename = result.file.filename;
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                }
+                
+                if (modelInput.files[0]) {
+                    const formData = new FormData();
+                    formData.append('file', modelInput.files[0]);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        newModel.serverFilename = result.file.filename;
+                        newModel.modelSize = result.file.size;
+                        newModel.modelName = result.file.originalName;
+                        newModel.uploadTime = result.file.uploadTime;
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                }
+                
+                models.push(newModel);
+                saveModels();
+                renderModels();
+                document.getElementById('addModelModal').classList.add('hidden');
+                clearAddModelForm();
+                
+            } catch (error) {
+                console.error('保存模型失败:', error);
+                alert('保存模型失败: ' + error.message + '\n请确保服务器已启动（npm start）');
+            }
+        });
+        
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function clearAddModelForm() {
+            document.getElementById('newModelTitle').value = '';
+            document.getElementById('newModelCover').value = '';
+            document.getElementById('newModelFile').value = '';
+            document.getElementById('newModelLocalPath').value = '';
+            document.getElementById('newModelDescription').value = '';
+        }
+        
+        async function deleteModel(id, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除这个模型吗？')) {
+                const model = models.find(m => m.id === id);
+                
+                if (model && model.serverFilename) {
+                    try {
+                        await fetch(`${API_BASE_URL}/files/${model.serverFilename}`, {
+                            method: 'DELETE'
+                        });
+                        console.log('模型文件已从服务器删除');
+                    } catch (error) {
+                        console.error('删除模型文件失败:', error);
+                    }
+                }
+                
+                if (model && model.coverFilename) {
+                    try {
+                        await fetch(`${API_BASE_URL}/files/${model.coverFilename}`, {
+                            method: 'DELETE'
+                        });
+                        console.log('封面文件已从服务器删除');
+                    } catch (error) {
+                        console.error('删除封面文件失败:', error);
+                    }
+                }
+                
+                models = models.filter(m => m.id !== id);
+                saveModels();
+                renderModels();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作品展示 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .work-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .work-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(139, 69, 19, 0.4);
+            border-color: #8B4513;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .work-card {
+            border: 3px dashed #8B4513;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 4px;
+            background: rgba(139, 69, 19, 0.05);
+            cursor: text;
+        }
+        
+        .edit-mode .delete-btn {
+            display: block;
+        }
+        
+        .edit-mode .edit-controls {
+            display: flex;
+        }
+        
+        .edit-controls {
+            display: none;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 10;
+        }
+        
+        .delete-btn {
+            display: none;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown editable hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600 editable">作品展示</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <button id="addWorkBtn" class="btn-primary px-4 py-2 font-medium hidden">
+                        <i class="fa fa-plus mr-2"></i>添加作品
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-earth-brown mb-4" style="font-family: 'SimSun', 'STSong', serif;">
+                作品展示
+            </h2>
+            <p class="text-gray-600 text-lg">学生优秀作品，激发创作灵感</p>
+            <div class="w-32 h-1 bg-earth-brown mx-auto mt-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="worksGrid">
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <div id="addWorkModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-earth-brown mb-4">添加作品</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">作品标题</label>
+                    <input type="text" id="newWorkTitle" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入作品标题">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">作者</label>
+                    <input type="text" id="newWorkAuthor" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入作者姓名">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">作品图片</label>
+                    <input type="file" id="newWorkImage" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">作品描述</label>
+                    <textarea id="newWorkDescription" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="4" placeholder="请输入作品描述"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="cancelAddWork" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveAddWork" class="btn-primary px-4 py-2">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editMode = false;
+        let works = [];
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadWorks();
+            renderWorks();
+        });
+        
+        function loadWorks() {
+            const savedWorks = localStorage.getItem('works');
+            if (savedWorks) {
+                works = JSON.parse(savedWorks);
+            } else {
+                works = [
+                    {
+                        id: 1,
+                        title: '环保创意装置',
+                        author: '六年级 李明',
+                        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Student%20eco-friendly%20creative%20device%2C%20educational&image_size=landscape_4_3',
+                        description: '利用废旧材料制作的环保装置，体现了环保意识和创新思维。'
+                    },
+                    {
+                        id: 2,
+                        title: '数学趣味模型',
+                        author: '八年级 王芳',
+                        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Student%20mathematics%20model%2C%20educational&image_size=landscape_4_3',
+                        description: '通过立体几何模型，直观展示数学概念，帮助理解抽象知识。'
+                    },
+                    {
+                        id: 3,
+                        title: '物理实验装置',
+                        author: '九年级 张伟',
+                        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Student%20physics%20experiment%20device%2C%20educational&image_size=landscape_4_3',
+                        description: '自制物理实验装置，验证物理原理，培养科学探究能力。'
+                    },
+                    {
+                        id: 4,
+                        title: '生物标本集',
+                        author: '七年级 刘洋',
+                        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Student%20biology%20specimen%20collection%2C%20educational&image_size=landscape_4_3',
+                        description: '精心制作的生物标本，记录生物多样性，培养观察能力。'
+                    }
+                ];
+                saveWorks();
+            }
+        }
+        
+        function saveWorks() {
+            localStorage.setItem('works', JSON.stringify(works));
+        }
+        
+        function renderWorks() {
+            const grid = document.getElementById('worksGrid');
+            grid.innerHTML = '';
+            
+            works.forEach(work => {
+                const card = document.createElement('div');
+                card.className = 'work-card relative';
+                card.innerHTML = `
+                    <button class="delete-btn btn-danger px-3 py-1 text-sm rounded" onclick="deleteWork(${work.id}, event)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <div class="edit-controls absolute top-2 left-2 z-10 flex gap-2">
+                        <label class="btn-primary px-2 py-1 text-xs rounded cursor-pointer">
+                            <i class="fa fa-upload"></i>
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadWorkImage(${work.id}, this)">
+                        </label>
+                        <button class="btn-primary px-2 py-1 text-xs rounded" onclick="downloadWorkImage(${work.id})">
+                            <i class="fa fa-download"></i>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <img src="${work.image}" alt="${work.title}" class="w-full h-48 object-cover">
+                        <div class="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            <i class="fa fa-eye mr-1"></i>查看
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg text-earth-brown mb-2 editable" data-field="title" data-id="${work.id}">${work.title}</h3>
+                        <p class="text-gray-500 text-sm mb-2 editable" data-field="author" data-id="${work.id}">${work.author}</p>
+                        <p class="text-gray-600 text-sm line-clamp-2 editable" data-field="description" data-id="${work.id}">${work.description}</p>
+                    </div>
+                `;
+                
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.delete-btn') && !e.target.closest('.editable')) {
+                        window.open(`work-detail.html?id=${work.id}`, '_blank');
+                    }
+                });
+                
+                grid.appendChild(card);
+            });
+            
+            setupEditableElements();
+        }
+        
+        function setupEditableElements() {
+            const editableElements = document.querySelectorAll('.editable');
+            editableElements.forEach(element => {
+                element.addEventListener('blur', function() {
+                    if (editMode) {
+                        const id = parseInt(this.dataset.id);
+                        const field = this.dataset.field;
+                        const value = this.textContent.trim();
+                        
+                        const work = works.find(w => w.id === id);
+                        if (work) {
+                            work[field] = value;
+                            saveWorks();
+                        }
+                    }
+                });
+            });
+        }
+        
+        function uploadWorkImage(id, input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const work = works.find(w => w.id === id);
+                    if (work) {
+                        work.image = e.target.result;
+                        saveWorks();
+                        renderWorks();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function downloadWorkImage(id) {
+            const work = works.find(w => w.id === id);
+            if (work && work.image) {
+                const link = document.createElement('a');
+                link.href = work.image;
+                link.download = `${work.title}_image.png`;
+                link.click();
+            }
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            const addBtn = document.getElementById('addWorkBtn');
+            const navTitle = document.querySelector('nav a');
+            const navSubtitle = document.querySelector('nav span');
+            const editableElements = document.querySelectorAll('.editable');
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+                addBtn.classList.remove('hidden');
+                editableElements.forEach(el => el.contentEditable = 'true');
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+                addBtn.classList.add('hidden');
+                editableElements.forEach(el => el.contentEditable = 'false');
+            }
+            
+            if (navTitle) {
+                navTitle.contentEditable = editMode;
+            }
+            if (navSubtitle) {
+                navSubtitle.contentEditable = editMode;
+            }
+        });
+        
+        document.getElementById('addWorkBtn').addEventListener('click', function() {
+            document.getElementById('addWorkModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('cancelAddWork').addEventListener('click', function() {
+            document.getElementById('addWorkModal').classList.add('hidden');
+            clearAddWorkForm();
+        });
+        
+        document.getElementById('saveAddWork').addEventListener('click', function() {
+            const title = document.getElementById('newWorkTitle').value.trim();
+            const author = document.getElementById('newWorkAuthor').value.trim();
+            const imageInput = document.getElementById('newWorkImage');
+            const description = document.getElementById('newWorkDescription').value.trim();
+            
+            if (!title) {
+                alert('请输入作品标题');
+                return;
+            }
+            
+            const newWork = {
+                id: Date.now(),
+                title: title,
+                author: author || '未知作者',
+                image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=' + encodeURIComponent(title) + '&image_size=landscape_4_3',
+                description: description || '暂无描述'
+            };
+            
+            if (imageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newWork.image = e.target.result;
+                    saveNewWork(newWork);
+                };
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                saveNewWork(newWork);
+            }
+        });
+        
+        function saveNewWork(work) {
+            works.push(work);
+            saveWorks();
+            renderWorks();
+            document.getElementById('addWorkModal').classList.add('hidden');
+            clearAddWorkForm();
+        }
+        
+        function clearAddWorkForm() {
+            document.getElementById('newWorkTitle').value = '';
+            document.getElementById('newWorkAuthor').value = '';
+            document.getElementById('newWorkImage').value = '';
+            document.getElementById('newWorkDescription').value = '';
+        }
+        
+        function deleteWork(id, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除这个作品吗？')) {
+                works = works.filter(w => w.id !== id);
+                saveWorks();
+                renderWorks();
+            }
+        }
+    </script>
+</body>
+</html>

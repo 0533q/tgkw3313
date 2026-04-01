@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微课详情 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 8px;
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .edit-mode .edit-controls {
+            display: block;
+        }
+        
+        .edit-controls {
+            display: none;
+        }
+        
+        .video-container {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .content-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600">微课详情</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <a href="courses.html" class="text-earth-brown hover:text-bamboo-green transition-colors">
+                        <i class="fa fa-arrow-left mr-1"></i>返回
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-earth-brown mb-2 editable" id="courseTitle"></h1>
+                <div class="edit-controls">
+                    <input type="text" id="editTitle" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-2" placeholder="编辑标题">
+                    <button onclick="saveTitle()" class="btn-primary px-4 py-2 text-sm">保存标题</button>
+                </div>
+            </div>
+
+            <div class="video-container mb-6">
+                <div class="relative">
+                    <video id="courseVideo" class="w-full" controls style="max-height: 500px;">
+                        您的浏览器不支持视频播放
+                    </video>
+                    <div class="edit-controls absolute top-2 right-2 space-x-2">
+                        <label class="btn-primary px-3 py-2 text-sm cursor-pointer">
+                            <i class="fa fa-upload mr-1"></i>上传视频
+                            <input type="file" id="videoUpload" accept="video/*" class="hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card p-6 mb-6">
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">文字解析</h2>
+                <div class="editable" id="courseDescription"></div>
+                <div class="edit-controls mt-4">
+                    <textarea id="editDescription" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="6" placeholder="编辑文字解析"></textarea>
+                    <button onclick="saveDescription()" class="btn-primary px-4 py-2 mt-2">保存解析</button>
+                </div>
+            </div>
+
+            <div class="content-card p-6">
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">相关学习</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="jumpTo3D()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-cube text-2xl mb-2 block"></i>
+                        <span class="font-medium">3D交互</span>
+                    </button>
+                    <button onclick="jumpToPractice()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-gamepad text-2xl mb-2 block"></i>
+                        <span class="font-medium">闯关练习</span>
+                    </button>
+                    <button onclick="jumpToStory()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-book text-2xl mb-2 block"></i>
+                        <span class="font-medium">故事集锦</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="edit-controls mt-6">
+                <button onclick="deleteCourse()" class="btn-danger px-6 py-3 w-full">
+                    <i class="fa fa-trash mr-2"></i>删除此微课
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        
+        let editMode = false;
+        let currentCourse = null;
+        let courseId = null;
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            courseId = getCourseId();
+            loadCourse();
+        });
+        
+        function getCourseId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return parseInt(urlParams.get('id'));
+        }
+        
+        function getCourseSequence() {
+            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
+            return courses.findIndex(c => c.id === courseId);
+        }
+        
+        function loadCourse() {
+            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
+            currentCourse = courses.find(c => c.id === courseId);
+            
+            if (!currentCourse) {
+                alert('微课不存在');
+                window.location.href = 'courses.html';
+                return;
+            }
+            
+            document.getElementById('courseTitle').textContent = currentCourse.title;
+            document.getElementById('editTitle').value = currentCourse.title;
+            document.getElementById('courseDescription').innerHTML = currentCourse.description.replace(/\n/g, '<br>');
+            document.getElementById('editDescription').value = currentCourse.description;
+            
+            if (currentCourse.video) {
+                document.getElementById('courseVideo').src = currentCourse.video;
+            }
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+            }
+        });
+        
+        document.getElementById('videoUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        document.getElementById('courseVideo').src = `http://localhost:3000/uploads/${result.file.filename}`;
+                        currentCourse.video = `http://localhost:3000/uploads/${result.file.filename}`;
+                        currentCourse.videoFilename = result.file.filename;
+                        saveCourse();
+                        alert('视频已上传到服务器');
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                } catch (error) {
+                    console.error('上传视频失败:', error);
+                    alert('上传视频失败: ' + error.message + '\n请确保服务器已启动（npm start）');
+                }
+            }
+        });
+        
+        function saveTitle() {
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (newTitle) {
+                currentCourse.title = newTitle;
+                document.getElementById('courseTitle').textContent = newTitle;
+                saveCourse();
+                alert('标题已保存');
+            }
+        }
+        
+        function saveDescription() {
+            const newDescription = document.getElementById('editDescription').value.trim();
+            if (newDescription) {
+                currentCourse.description = newDescription;
+                document.getElementById('courseDescription').innerHTML = newDescription.replace(/\n/g, '<br>');
+                saveCourse();
+                alert('解析已保存');
+            }
+        }
+        
+        function saveCourse() {
+            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
+            const index = courses.findIndex(c => c.id === courseId);
+            if (index !== -1) {
+                courses[index] = currentCourse;
+                localStorage.setItem('courses', JSON.stringify(courses));
+            }
+        }
+        
+        function jumpTo3D() {
+            const sequence = getCourseSequence();
+            const models = JSON.parse(localStorage.getItem('models') || '[]');
+            if (models.length > sequence && models[sequence]) {
+                window.open(`3d-detail.html?id=${models[sequence].id}`, '_blank');
+            } else {
+                alert('对应的3D模型不存在');
+            }
+        }
+        
+        function jumpToPractice() {
+            const sequence = getCourseSequence();
+            const practices = JSON.parse(localStorage.getItem('practices') || '[]');
+            if (practices.length > sequence && practices[sequence]) {
+                window.open(`practice-detail.html?id=${practices[sequence].id}`, '_blank');
+            } else {
+                alert('对应的闯关练习不存在');
+            }
+        }
+        
+        function jumpToStory() {
+            const sequence = getCourseSequence();
+            const stories = JSON.parse(localStorage.getItem('stories') || '[]');
+            if (stories.length > sequence && stories[sequence]) {
+                window.open(`story-detail.html?id=${stories[sequence].id}`, '_blank');
+            } else {
+                alert('对应的故事不存在');
+            }
+        }
+        
+        function deleteCourse() {
+            if (confirm('确定要删除这个微课吗？删除后将无法恢复！')) {
+                let courses = JSON.parse(localStorage.getItem('courses') || '[]');
+                courses = courses.filter(c => c.id !== courseId);
+                localStorage.setItem('courses', JSON.stringify(courses));
+                alert('微课已删除');
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html>

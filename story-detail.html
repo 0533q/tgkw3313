@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事详情 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 8px;
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .edit-mode .edit-controls {
+            display: block;
+        }
+        
+        .edit-controls {
+            display: none;
+        }
+        
+        .content-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+        }
+        
+        .story-content {
+            line-height: 2;
+            text-indent: 2em;
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600">故事详情</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <a href="stories.html" class="text-earth-brown hover:text-bamboo-green transition-colors">
+                        <i class="fa fa-arrow-left mr-1"></i>返回
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-earth-brown mb-2 editable" id="storyTitle"></h1>
+                <div class="edit-controls">
+                    <input type="text" id="editTitle" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-2" placeholder="编辑标题">
+                    <button onclick="saveTitle()" class="btn-primary px-4 py-2 text-sm">保存标题</button>
+                </div>
+            </div>
+
+            <div class="content-card p-6 mb-6">
+                <div class="mb-6">
+                    <img id="storyCover" src="" alt="故事封面" class="w-full h-64 object-cover rounded-lg">
+                    <div class="edit-controls mt-4">
+                        <label class="btn-primary px-4 py-2 text-sm cursor-pointer">
+                            <i class="fa fa-upload mr-1"></i>上传封面
+                            <input type="file" id="coverUpload" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+                </div>
+                
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">故事内容</h2>
+                <div class="editable story-content text-gray-700" id="storyContent"></div>
+                <div class="edit-controls mt-4">
+                    <textarea id="editContent" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="10" placeholder="编辑故事内容"></textarea>
+                    <button onclick="saveContent()" class="btn-primary px-4 py-2 mt-2">保存内容</button>
+                </div>
+            </div>
+
+            <div class="content-card p-6">
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">相关学习</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="jumpToCourse()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-video-camera text-2xl mb-2 block"></i>
+                        <span class="font-medium">微课学习</span>
+                    </button>
+                    <button onclick="jumpTo3D()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-cube text-2xl mb-2 block"></i>
+                        <span class="font-medium">3D交互</span>
+                    </button>
+                    <button onclick="jumpToPractice()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-gamepad text-2xl mb-2 block"></i>
+                        <span class="font-medium">闯关练习</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="edit-controls mt-6">
+                <button onclick="deleteStory()" class="btn-danger px-6 py-3 w-full">
+                    <i class="fa fa-trash mr-2"></i>删除此故事
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <script>
+        let editMode = false;
+        let currentStory = null;
+        let storyId = null;
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            storyId = getStoryId();
+            loadStory();
+        });
+        
+        function getStoryId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return parseInt(urlParams.get('id'));
+        }
+        
+        function getStorySequence() {
+            const stories = JSON.parse(localStorage.getItem('stories') || '[]');
+            return stories.findIndex(s => s.id === storyId);
+        }
+        
+        function loadStory() {
+            const stories = JSON.parse(localStorage.getItem('stories') || '[]');
+            currentStory = stories.find(s => s.id === storyId);
+            
+            if (!currentStory) {
+                alert('故事不存在');
+                window.location.href = 'stories.html';
+                return;
+            }
+            
+            document.getElementById('storyTitle').textContent = currentStory.title;
+            document.getElementById('editTitle').value = currentStory.title;
+            document.getElementById('storyCover').src = currentStory.cover;
+            document.getElementById('storyContent').innerHTML = currentStory.content.replace(/\n/g, '<br>');
+            document.getElementById('editContent').value = currentStory.content;
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+            }
+        });
+        
+        document.getElementById('coverUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('storyCover').src = event.target.result;
+                    currentStory.cover = event.target.result;
+                    saveStory();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        function saveTitle() {
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (newTitle) {
+                currentStory.title = newTitle;
+                document.getElementById('storyTitle').textContent = newTitle;
+                saveStory();
+                alert('标题已保存');
+            }
+        }
+        
+        function saveContent() {
+            const newContent = document.getElementById('editContent').value.trim();
+            if (newContent) {
+                currentStory.content = newContent;
+                document.getElementById('storyContent').innerHTML = newContent.replace(/\n/g, '<br>');
+                saveStory();
+                alert('内容已保存');
+            }
+        }
+        
+        function saveStory() {
+            const stories = JSON.parse(localStorage.getItem('stories') || '[]');
+            const index = stories.findIndex(s => s.id === storyId);
+            if (index !== -1) {
+                stories[index] = currentStory;
+                localStorage.setItem('stories', JSON.stringify(stories));
+            }
+        }
+        
+        function jumpToCourse() {
+            const sequence = getStorySequence();
+            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
+            if (courses.length > sequence && courses[sequence]) {
+                window.open(`course-detail.html?id=${courses[sequence].id}`, '_blank');
+            } else {
+                alert('对应的微课不存在');
+            }
+        }
+        
+        function jumpTo3D() {
+            const sequence = getStorySequence();
+            const models = JSON.parse(localStorage.getItem('models') || '[]');
+            if (models.length > sequence && models[sequence]) {
+                window.open(`3d-detail.html?id=${models[sequence].id}`, '_blank');
+            } else {
+                alert('对应的3D模型不存在');
+            }
+        }
+        
+        function jumpToPractice() {
+            const sequence = getStorySequence();
+            const practices = JSON.parse(localStorage.getItem('practices') || '[]');
+            if (practices.length > sequence && practices[sequence]) {
+                window.open(`practice-detail.html?id=${practices[sequence].id}`, '_blank');
+            } else {
+                alert('对应的闯关练习不存在');
+            }
+        }
+        
+        function deleteStory() {
+            if (confirm('确定要删除这个故事吗？删除后将无法恢复！')) {
+                let stories = JSON.parse(localStorage.getItem('stories') || '[]');
+                stories = stories.filter(s => s.id !== storyId);
+                localStorage.setItem('stories', JSON.stringify(stories));
+                alert('故事已删除');
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html>

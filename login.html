@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: white;
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(139, 69, 19, 0.3);
+        }
+        
+        .login-title {
+            font-family: 'SimSun', 'STSong', serif;
+            color: #8B4513;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-input {
+            border: 2px solid #D2B48C;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .login-input:focus {
+            border-color: #8B4513;
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+            outline: none;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .decorative-border {
+            border: 2px solid #D2B48C;
+            border-radius: 4px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card p-8 w-full max-w-md mx-4">
+        <div class="text-center mb-8">
+            <h1 class="login-title text-4xl font-bold mb-2">天工开物</h1>
+            <p class="text-gray-600 text-lg">国风理科学习站</p>
+            <div class="w-24 h-1 bg-earth-brown mx-auto mt-4"></div>
+        </div>
+        
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">用户名</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="login-input w-full px-4 py-3 text-gray-700"
+                    placeholder="请输入用户名"
+                    required
+                >
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">密码</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="login-input w-full px-4 py-3 text-gray-700"
+                    placeholder="请输入密码"
+                    required
+                >
+            </div>
+            
+            <div id="errorMessage" class="error-message text-center">
+                用户名或密码错误，请重试
+            </div>
+            
+            <button 
+                type="submit" 
+                class="login-btn w-full py-3 text-lg font-bold"
+            >
+                登录
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center text-gray-500 text-sm">
+            <p>默认账号：admin</p>
+            <p>默认密码：123456</p>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (username === 'admin' && password === '123456') {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('username', username);
+                window.location.href = 'index.html';
+            } else {
+                errorMessage.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+        
+        usernameInput.addEventListener('input', function() {
+            errorMessage.style.display = 'none';
+        });
+        
+        passwordInput.addEventListener('input', function() {
+            errorMessage.style.display = 'none';
+        });
+        
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

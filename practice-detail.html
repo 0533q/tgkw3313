@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闯关练习详情 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 8px;
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .edit-mode .edit-controls {
+            display: block;
+        }
+        
+        .edit-controls {
+            display: none;
+        }
+        
+        .content-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+        }
+        
+        .quiz-option {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            border-color: #8B4513;
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .quiz-option.selected {
+            border-color: #8B4513;
+            background: rgba(139, 69, 19, 0.1);
+        }
+        
+        .quiz-option.correct {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        
+        .quiz-option.wrong {
+            border-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600">闯关练习详情</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <a href="practice.html" class="text-earth-brown hover:text-bamboo-green transition-colors">
+                        <i class="fa fa-arrow-left mr-1"></i>返回
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-earth-brown mb-2 editable" id="practiceTitle"></h1>
+                <div class="edit-controls">
+                    <input type="text" id="editTitle" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-2" placeholder="编辑标题">
+                    <button onclick="saveTitle()" class="btn-primary px-4 py-2 text-sm">保存标题</button>
+                </div>
+            </div>
+
+            <div class="content-card p-6 mb-6">
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">练习说明</h2>
+                <div class="editable" id="practiceContent"></div>
+                <div class="edit-controls mt-4">
+                    <textarea id="editContent" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="6" placeholder="编辑练习内容"></textarea>
+                    <button onclick="saveContent()" class="btn-primary px-4 py-2 mt-2">保存内容</button>
+                </div>
+            </div>
+
+            <div class="content-card p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-earth-brown">闯关题目</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-600">得分：</span>
+                            <span id="score" class="text-2xl font-bold text-earth-brown">0</span>
+                            <span class="text-gray-600">/ 100</span>
+                        </div>
+                        <button id="resetQuiz" class="bg-gray-200 text-gray-700 px-4 py-2 font-medium rounded hover:bg-gray-300 transition-colors" onclick="resetQuiz()">
+                            <i class="fa fa-refresh mr-2"></i>重新开始
+                        </button>
+                        <button id="submitQuiz" class="btn-primary px-6 py-2 font-medium" onclick="submitQuiz()">
+                            <i class="fa fa-check mr-2"></i>提交答案
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="quizContainer">
+                </div>
+                
+                <div class="edit-controls mt-4">
+                    <button onclick="addQuiz()" class="btn-primary px-4 py-2">
+                        <i class="fa fa-plus mr-2"></i>添加题目
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-card p-6 mb-6">
+                <h2 class="text-2xl font-bold text-earth-brown mb-4">相关学习</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="jumpToCourse()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-video-camera text-2xl mb-2 block"></i>
+                        <span class="font-medium">微课学习</span>
+                    </button>
+                    <button onclick="jumpTo3D()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-cube text-2xl mb-2 block"></i>
+                        <span class="font-medium">3D交互</span>
+                    </button>
+                    <button onclick="jumpToStory()" class="btn-primary py-4 px-6 text-center">
+                        <i class="fa fa-book text-2xl mb-2 block"></i>
+                        <span class="font-medium">故事集锦</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="edit-controls mt-6">
+                <button onclick="deletePractice()" class="btn-danger px-6 py-3 w-full">
+                    <i class="fa fa-trash mr-2"></i>删除此练习
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="addQuizModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-earth-brown mb-4" id="quizModalTitle">添加题目</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">题目内容</label>
+                    <textarea id="quizQuestion" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="3" placeholder="请输入题目"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">选项 A</label>
+                    <input type="text" id="quizOption0" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入选项A">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">选项 B</label>
+                    <input type="text" id="quizOption1" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入选项B">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">选项 C</label>
+                    <input type="text" id="quizOption2" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入选项C">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">选项 D</label>
+                    <input type="text" id="quizOption3" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入选项D">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">正确答案</label>
+                    <select id="quizCorrect" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="0">选项 A</option>
+                        <option value="1">选项 B</option>
+                        <option value="2">选项 C</option>
+                        <option value="3">选项 D</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="cancelQuiz" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveQuiz" class="btn-primary px-4 py-2">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <script>
+        let editMode = false;
+        let currentPractice = null;
+        let practiceId = null;
+        let quizzes = [];
+        let editingQuizId = null;
+        let submitted = false;
+        let userAnswers = {};
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            practiceId = getPracticeId();
+            loadPractice();
+        });
+        
+        function getPracticeId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return parseInt(urlParams.get('id'));
+        }
+        
+        function getPracticeSequence() {
+            const practices = JSON.parse(localStorage.getItem('practices') || '[]');
+            return practices.findIndex(p => p.id === practiceId);
+        }
+        
+        function loadPractice() {
+            const practices = JSON.parse(localStorage.getItem('practices') || '[]');
+            currentPractice = practices.find(p => p.id === practiceId);
+            
+            if (!currentPractice) {
+                alert('练习不存在');
+                window.location.href = 'practice.html';
+                return;
+            }
+            
+            document.getElementById('practiceTitle').textContent = currentPractice.title;
+            document.getElementById('editTitle').value = currentPractice.title;
+            document.getElementById('practiceContent').innerHTML = currentPractice.content.replace(/\n/g, '<br>');
+            document.getElementById('editContent').value = currentPractice.content;
+            
+            loadQuizzes();
+            renderQuizzes();
+        }
+        
+        function loadQuizzes() {
+            const savedQuizzes = localStorage.getItem(`quizzes_${practiceId}`);
+            if (savedQuizzes) {
+                quizzes = JSON.parse(savedQuizzes);
+            } else {
+                quizzes = [
+                    {
+                        id: 1,
+                        question: '凸透镜成像时，当物体在二倍焦距以外时，成的像是？',
+                        options: ['倒立放大的实像', '倒立缩小的实像', '正立放大的虚像', '正立缩小的虚像'],
+                        correct: 1
+                    },
+                    {
+                        id: 2,
+                        question: '杠杆平衡的条件是什么？',
+                        options: ['动力×动力臂=阻力×阻力臂', '动力=阻力', '动力臂=阻力臂', '动力+动力臂=阻力+阻力臂'],
+                        correct: 0
+                    },
+                    {
+                        id: 3,
+                        question: '影响滑动摩擦力大小的因素有哪些？',
+                        options: ['只与压力有关', '只与接触面粗糙程度有关', '与压力和接触面粗糙程度都有关', '与物体运动速度有关'],
+                        correct: 2
+                    },
+                    {
+                        id: 4,
+                        question: '在串联电路中，各处的电流有什么关系？',
+                        options: ['处处相等', '逐渐减小', '逐渐增大', '无法确定'],
+                        correct: 0
+                    }
+                ];
+                saveQuizzes();
+            }
+        }
+        
+        function saveQuizzes() {
+            localStorage.setItem(`quizzes_${practiceId}`, JSON.stringify(quizzes));
+        }
+        
+        function renderQuizzes() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = '';
+            
+            quizzes.forEach((quiz, index) => {
+                const quizDiv = document.createElement('div');
+                quizDiv.className = 'mb-6';
+                quizDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-lg font-bold text-earth-brown">题目 ${index + 1}</h3>
+                        <div class="edit-controls flex space-x-2">
+                            <button onclick="editQuiz(${quiz.id})" class="btn-primary px-3 py-1 text-sm">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button onclick="deleteQuiz(${quiz.id})" class="btn-danger px-3 py-1 text-sm">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 mb-3 editable">${quiz.question}</p>
+                    <div class="space-y-2">
+                        ${quiz.options.map((option, optIndex) => {
+                            let optionClass = 'quiz-option';
+                            let selectedClass = '';
+                            
+                            if (submitted) {
+                                if (optIndex === quiz.correct) {
+                                    selectedClass = 'correct';
+                                } else if (userAnswers[quiz.id] === optIndex && optIndex !== quiz.correct) {
+                                    selectedClass = 'wrong';
+                                }
+                            } else {
+                                if (userAnswers[quiz.id] === optIndex) {
+                                    selectedClass = 'selected';
+                                }
+                            }
+                            
+                            return `
+                                <div class="${optionClass} ${selectedClass}" onclick="selectOption(${quiz.id}, ${optIndex})" data-quiz="${quiz.id}" data-option="${optIndex}">
+                                    <span class="font-medium mr-2">${String.fromCharCode(65 + optIndex)}.</span>
+                                    ${option}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(quizDiv);
+            });
+        }
+        
+        function selectOption(quizId, optionIndex) {
+            if (submitted) return;
+            
+            userAnswers[quizId] = optionIndex;
+            
+            const options = document.querySelectorAll(`[data-quiz="${quizId}"]`);
+            options.forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'wrong');
+            });
+            
+            const selectedOption = document.querySelector(`[data-quiz="${quizId}"][data-option="${optionIndex}"]`);
+            selectedOption.classList.add('selected');
+        }
+        
+        function submitQuiz() {
+            submitted = true;
+            
+            let correctCount = 0;
+            quizzes.forEach(quiz => {
+                if (userAnswers[quiz.id] === quiz.correct) {
+                    correctCount++;
+                }
+            });
+            
+            const score = Math.round((correctCount / quizzes.length) * 100);
+            document.getElementById('score').textContent = score;
+            
+            document.getElementById('submitQuiz').disabled = true;
+            document.getElementById('submitQuiz').innerHTML = '<i class="fa fa-check-circle mr-2"></i>已提交';
+            document.getElementById('submitQuiz').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            renderQuizzes();
+            
+            if (score === 100) {
+                alert('恭喜你！全部答对，得分：' + score + '分');
+            } else if (score >= 60) {
+                alert('答题完成！得分：' + score + '分，继续加油！');
+            } else {
+                alert('答题完成！得分：' + score + '分，请再接再厉！');
+            }
+        }
+        
+        function addQuiz() {
+            editingQuizId = null;
+            document.getElementById('quizModalTitle').textContent = '添加题目';
+            document.getElementById('quizQuestion').value = '';
+            document.getElementById('quizOption0').value = '';
+            document.getElementById('quizOption1').value = '';
+            document.getElementById('quizOption2').value = '';
+            document.getElementById('quizOption3').value = '';
+            document.getElementById('quizCorrect').value = '0';
+            document.getElementById('addQuizModal').classList.remove('hidden');
+        }
+        
+        function editQuiz(quizId) {
+            const quiz = quizzes.find(q => q.id === quizId);
+            if (!quiz) return;
+            
+            editingQuizId = quizId;
+            document.getElementById('quizModalTitle').textContent = '编辑题目';
+            document.getElementById('quizQuestion').value = quiz.question;
+            document.getElementById('quizOption0').value = quiz.options[0];
+            document.getElementById('quizOption1').value = quiz.options[1];
+            document.getElementById('quizOption2').value = quiz.options[2];
+            document.getElementById('quizOption3').value = quiz.options[3];
+            document.getElementById('quizCorrect').value = quiz.correct;
+            document.getElementById('addQuizModal').classList.remove('hidden');
+        }
+        
+        function saveQuizFromModal() {
+            const question = document.getElementById('quizQuestion').value.trim();
+            const options = [
+                document.getElementById('quizOption0').value.trim(),
+                document.getElementById('quizOption1').value.trim(),
+                document.getElementById('quizOption2').value.trim(),
+                document.getElementById('quizOption3').value.trim()
+            ];
+            const correct = parseInt(document.getElementById('quizCorrect').value);
+            
+            if (!question || options.some(opt => !opt)) {
+                alert('请填写完整的题目和选项');
+                return;
+            }
+            
+            if (editingQuizId) {
+                const quizIndex = quizzes.findIndex(q => q.id === editingQuizId);
+                if (quizIndex !== -1) {
+                    quizzes[quizIndex] = {
+                        id: editingQuizId,
+                        question: question,
+                        options: options,
+                        correct: correct
+                    };
+                }
+            } else {
+                const newQuiz = {
+                    id: Date.now(),
+                    question: question,
+                    options: options,
+                    correct: correct
+                };
+                quizzes.push(newQuiz);
+            }
+            
+            saveQuizzes();
+            resetQuiz();
+            renderQuizzes();
+            document.getElementById('addQuizModal').classList.add('hidden');
+        }
+        
+        function deleteQuiz(quizId) {
+            if (confirm('确定要删除这道题吗？')) {
+                quizzes = quizzes.filter(q => q.id !== quizId);
+                saveQuizzes();
+                resetQuiz();
+                renderQuizzes();
+            }
+        }
+        
+        function resetQuiz() {
+            submitted = false;
+            userAnswers = {};
+            document.getElementById('score').textContent = '0';
+            document.getElementById('submitQuiz').disabled = false;
+            document.getElementById('submitQuiz').innerHTML = '<i class="fa fa-check mr-2"></i>提交答案';
+            document.getElementById('submitQuiz').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+            }
+        });
+        
+        document.getElementById('cancelQuiz').addEventListener('click', function() {
+            document.getElementById('addQuizModal').classList.add('hidden');
+        });
+        
+        document.getElementById('saveQuiz').addEventListener('click', saveQuizFromModal);
+        
+        function saveTitle() {
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (newTitle) {
+                currentPractice.title = newTitle;
+                document.getElementById('practiceTitle').textContent = newTitle;
+                savePractice();
+                alert('标题已保存');
+            }
+        }
+        
+        function saveContent() {
+            const newContent = document.getElementById('editContent').value.trim();
+            if (newContent) {
+                currentPractice.content = newContent;
+                document.getElementById('practiceContent').innerHTML = newContent.replace(/\n/g, '<br>');
+                savePractice();
+                alert('内容已保存');
+            }
+        }
+        
+        function savePractice() {
+            const practices = JSON.parse(localStorage.getItem('practices') || '[]');
+            const index = practices.findIndex(p => p.id === practiceId);
+            if (index !== -1) {
+                practices[index] = currentPractice;
+                localStorage.setItem('practices', JSON.stringify(practices));
+            }
+        }
+        
+        function jumpToCourse() {
+            const sequence = getPracticeSequence();
+            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
+            if (courses.length > sequence && courses[sequence]) {
+                window.open(`course-detail.html?id=${courses[sequence].id}`, '_blank');
+            } else {
+                alert('对应的微课不存在');
+            }
+        }
+        
+        function jumpTo3D() {
+            const sequence = getPracticeSequence();
+            const models = JSON.parse(localStorage.getItem('models') || '[]');
+            if (models.length > sequence && models[sequence]) {
+                window.open(`3d-detail.html?id=${models[sequence].id}`, '_blank');
+            } else {
+                alert('对应的3D模型不存在');
+            }
+        }
+        
+        function jumpToStory() {
+            const sequence = getPracticeSequence();
+            const stories = JSON.parse(localStorage.getItem('stories') || '[]');
+            if (stories.length > sequence && stories[sequence]) {
+                window.open(`story-detail.html?id=${stories[sequence].id}`, '_blank');
+            } else {
+                alert('对应的故事不存在');
+            }
+        }
+        
+        function deletePractice() {
+            if (confirm('确定要删除这个练习吗？删除后将无法恢复！')) {
+                let practices = JSON.parse(localStorage.getItem('practices') || '[]');
+                practices = practices.filter(p => p.id !== practiceId);
+                localStorage.setItem('practices', JSON.stringify(practices));
+                localStorage.removeItem(`quizzes_${practiceId}`);
+                alert('练习已删除');
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html>

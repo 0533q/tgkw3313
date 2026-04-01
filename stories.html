@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事集锦 - 天工开物·国风理科学习站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'earth-brown': '#8B4513',
+                        'bamboo-green': '#8FBC8F',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#333333',
+                        'cream': '#f5f5dc',
+                    },
+                    fontFamily: {
+                        'chinese': ['SimSun', 'STSong', 'serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f5dc 0%, #e8d4b8 100%);
+            min-height: 100vh;
+        }
+        
+        .story-card {
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .story-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(139, 69, 19, 0.4);
+            border-color: #8B4513;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            color: #f5f5dc;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.6);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #a71d2a;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .edit-mode .story-card {
+            border: 3px dashed #8B4513;
+        }
+        
+        .edit-mode .editable {
+            border: 2px dashed #8B4513;
+            padding: 4px;
+            background: rgba(139, 69, 19, 0.05);
+            cursor: text;
+        }
+        
+        .edit-mode .delete-btn {
+            display: block;
+        }
+        
+        .edit-mode .edit-controls {
+            display: flex;
+        }
+        
+        .edit-controls {
+            display: none;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 10;
+        }
+        
+        .delete-btn {
+            display: none;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+        }
+        
+        .cover-upload-area {
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .upload-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(139, 69, 19, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+        
+        .edit-mode .upload-overlay {
+            display: flex;
+        }
+        
+        .edit-mode .cover-upload-area:hover .upload-overlay {
+            background: rgba(139, 69, 19, 0.85);
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-earth-brown editable hover:text-bamboo-green transition-colors" style="font-family: 'SimSun', 'STSong', serif;">天工开物</a>
+                    <span class="ml-2 text-gray-600 editable">故事集锦</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="editModeToggle" class="btn-primary px-4 py-2 font-medium">
+                        <i class="fa fa-pencil mr-2"></i>编辑模式
+                    </button>
+                    <button id="addStoryBtn" class="btn-primary px-4 py-2 font-medium hidden">
+                        <i class="fa fa-plus mr-2"></i>添加故事
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-earth-brown mb-4" style="font-family: 'SimSun', 'STSong', serif;">
+                故事集锦
+            </h2>
+            <p class="text-gray-600 text-lg">古代科学家故事，传承科学精神</p>
+            <div class="w-32 h-1 bg-earth-brown mx-auto mt-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="storiesGrid">
+        </div>
+    </main>
+
+    <footer class="bg-dark-gray text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2026 天工开物·国风理科学习站 版权所有</p>
+        </div>
+    </footer>
+
+    <div id="addStoryModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-earth-brown mb-4">添加故事</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">故事标题</label>
+                    <input type="text" id="newStoryTitle" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入故事标题">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">封面图片</label>
+                    <input type="file" id="newStoryCover" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">故事内容</label>
+                    <textarea id="newStoryContent" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="4" placeholder="请输入故事内容"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="cancelAddStory" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveAddStory" class="btn-primary px-4 py-2">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        
+        let editMode = false;
+        let stories = [];
+        
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadStories();
+            renderStories();
+        });
+        
+        function loadStories() {
+            const savedStories = localStorage.getItem('stories');
+            if (savedStories) {
+                stories = JSON.parse(savedStories);
+            } else {
+                stories = [
+                    {
+                        id: 1,
+                        title: '张衡与地动仪',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Zhang%20Heng%20ancient%20Chinese%20scientist%20with%20seismoscope&image_size=landscape_4_3',
+                        content: '张衡（78年－139年），字平子，南阳西鄂人，东汉时期伟大的天文学家、数学家、发明家、地理学家和文学家。他发明了浑天仪、地动仪等科学仪器，对中国古代科学技术的发展做出了重要贡献。'
+                    },
+                    {
+                        id: 2,
+                        title: '祖冲之与圆周率',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Zu%20Chongzhi%20ancient%20Chinese%20mathematician%20calculating%20pi&image_size=landscape_4_3',
+                        content: '祖冲之（429年－500年），字文远，范阳遒县人，南北朝时期杰出的数学家、天文学家。他精确计算出圆周率在3.1415926和3.1415927之间，这一纪录保持了近千年，体现了中国古代数学的高度成就。'
+                    },
+                    {
+                        id: 3,
+                        title: '宋应星与天工开物',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Song%20Yingxing%20author%20of%20Tiangong%20Kaiwu%20ancient%20Chinese%20encyclopedia&image_size=landscape_4_3',
+                        content: '宋应星（1587年－1666年），字长庚，江西奉新人，明代著名科学家。他编撰的《天工开物》是世界上第一部关于农业和手工业生产的综合性著作，被誉为"中国17世纪的工艺百科全书"。'
+                    },
+                    {
+                        id: 4,
+                        title: '李时珍与本草纲目',
+                        cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Li%20Shizhen%20ancient%20Chinese%20pharmacologist%20with%20herbal%20medicine&image_size=landscape_4_3',
+                        content: '李时珍（1518年－1593年），字东璧，湖北蕲春人，明代著名医药学家。他历时27年编撰的《本草纲目》是中国古代药物学的集大成之作，收录药物1892种，被誉为"东方医学巨典"。'
+                    }
+                ];
+                saveStories();
+            }
+        }
+        
+        function saveStories() {
+            localStorage.setItem('stories', JSON.stringify(stories));
+        }
+        
+        function renderStories() {
+            const grid = document.getElementById('storiesGrid');
+            grid.innerHTML = '';
+            
+            stories.forEach(story => {
+                const card = document.createElement('div');
+                card.className = 'story-card relative';
+                card.innerHTML = `
+                    <button class="delete-btn btn-danger px-3 py-1 text-sm rounded" onclick="deleteStory(${story.id}, event)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <div class="edit-controls absolute top-2 left-2 z-10 flex gap-2">
+                        <label class="btn-primary px-2 py-1 text-xs rounded cursor-pointer">
+                            <i class="fa fa-upload"></i>
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadStoryCover(${story.id}, this)">
+                        </label>
+                        <button class="btn-primary px-2 py-1 text-xs rounded" onclick="downloadStoryCover(${story.id})">
+                            <i class="fa fa-download"></i>
+                        </button>
+                    </div>
+                    <div class="relative cover-upload-area" onclick="triggerCoverUpload(${story.id}, event)">
+                        <img src="${story.cover}" alt="${story.title}" class="w-full h-48 object-cover" id="cover-${story.id}">
+                        <div class="upload-overlay hidden">
+                            <i class="fa fa-upload text-4xl"></i>
+                            <p class="mt-2">点击上传封面</p>
+                        </div>
+                        <div class="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            <i class="fa fa-book mr-1"></i>阅读
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg text-earth-brown mb-2 editable" data-field="title" data-id="${story.id}">${story.title}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-2 editable" data-field="content" data-id="${story.id}">${story.content}</p>
+                    </div>
+                `;
+                
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.delete-btn') && !e.target.closest('.editable')) {
+                        window.open(`story-detail.html?id=${story.id}`, '_blank');
+                    }
+                });
+                
+                grid.appendChild(card);
+            });
+            
+            setupEditableElements();
+        }
+        
+        function setupEditableElements() {
+            const editableElements = document.querySelectorAll('.editable');
+            editableElements.forEach(element => {
+                element.addEventListener('blur', function() {
+                    if (editMode) {
+                        const id = parseInt(this.dataset.id);
+                        const field = this.dataset.field;
+                        const value = this.textContent.trim();
+                        
+                        const story = stories.find(s => s.id === id);
+                        if (story) {
+                            story[field] = value;
+                            saveStories();
+                        }
+                    }
+                });
+            });
+        }
+        
+        function triggerCoverUpload(id, event) {
+            if (editMode) {
+                event.preventDefault();
+                event.stopPropagation();
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = function(e) {
+                    uploadStoryCover(id, e.target);
+                };
+                fileInput.click();
+            } else {
+                window.open(`story-detail.html?id=${id}`, '_blank');
+            }
+        }
+        
+        async function uploadStoryCover(id, input) {
+            const file = input.files[0];
+            if (file) {
+                try {
+                    console.log('开始上传封面图片...');
+                    
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    console.log('服务器响应状态:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('服务器响应:', result);
+                    
+                    if (result.success) {
+                        const story = stories.find(s => s.id === id);
+                        if (story) {
+                            const newCoverUrl = `http://localhost:3000/uploads/${result.file.filename}`;
+                            story.cover = newCoverUrl;
+                            story.coverFilename = result.file.filename;
+                            saveStories();
+                            
+                            const coverImg = document.getElementById(`cover-${id}`);
+                            if (coverImg) {
+                                coverImg.src = newCoverUrl;
+                            }
+                            
+                            alert('封面已上传到服务器');
+                        }
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                } catch (error) {
+                    console.error('上传封面失败:', error);
+                    alert('上传封面失败: ' + error.message + '\n请确保服务器已启动（npm start）');
+                }
+                
+                input.value = '';
+            }
+        }
+        
+        function downloadStoryCover(id) {
+            const story = stories.find(s => s.id === id);
+            if (story && story.cover) {
+                const link = document.createElement('a');
+                link.href = story.cover;
+                link.download = `${story.title}_cover.png`;
+                link.click();
+            }
+        }
+        
+        document.getElementById('editModeToggle').addEventListener('click', function() {
+            editMode = !editMode;
+            const body = document.body;
+            const addBtn = document.getElementById('addStoryBtn');
+            const navTitle = document.querySelector('nav a');
+            const navSubtitle = document.querySelector('nav span');
+            const editableElements = document.querySelectorAll('.editable');
+            
+            if (editMode) {
+                body.classList.add('edit-mode');
+                this.innerHTML = '<i class="fa fa-eye mr-2"></i>预览模式';
+                addBtn.classList.remove('hidden');
+                editableElements.forEach(el => el.contentEditable = 'true');
+            } else {
+                body.classList.remove('edit-mode');
+                this.innerHTML = '<i class="fa fa-pencil mr-2"></i>编辑模式';
+                addBtn.classList.add('hidden');
+                editableElements.forEach(el => el.contentEditable = 'false');
+            }
+            
+            if (navTitle) {
+                navTitle.contentEditable = editMode;
+            }
+            if (navSubtitle) {
+                navSubtitle.contentEditable = editMode;
+            }
+        });
+        
+        document.getElementById('addStoryBtn').addEventListener('click', function() {
+            document.getElementById('addStoryModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('cancelAddStory').addEventListener('click', function() {
+            document.getElementById('addStoryModal').classList.add('hidden');
+            clearAddStoryForm();
+        });
+        
+        document.getElementById('saveAddStory').addEventListener('click', async function() {
+            const title = document.getElementById('newStoryTitle').value.trim();
+            const coverInput = document.getElementById('newStoryCover');
+            const content = document.getElementById('newStoryContent').value.trim();
+            
+            if (!title) {
+                alert('请输入故事标题');
+                return;
+            }
+            
+            const newStory = {
+                id: Date.now(),
+                title: title,
+                cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=' + encodeURIComponent(title) + '&image_size=landscape_4_3',
+                content: content || '暂无内容'
+            };
+            
+            try {
+                if (coverInput.files[0]) {
+                    const formData = new FormData();
+                    formData.append('image', coverInput.files[0]);
+                    
+                    const response = await fetch(`${API_BASE_URL}/upload-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        newStory.cover = `http://localhost:3000/uploads/${result.file.filename}`;
+                        newStory.coverFilename = result.file.filename;
+                    } else {
+                        throw new Error(result.error || '上传失败');
+                    }
+                }
+                
+                stories.push(newStory);
+                saveStories();
+                renderStories();
+                document.getElementById('addStoryModal').classList.add('hidden');
+                clearAddStoryForm();
+                
+            } catch (error) {
+                console.error('保存故事失败:', error);
+                alert('保存故事失败: ' + error.message + '\n请确保服务器已启动（npm start）');
+            }
+        });
+        
+        function saveNewStory(story) {
+            stories.push(story);
+            saveStories();
+            renderStories();
+            document.getElementById('addStoryModal').classList.add('hidden');
+            clearAddStoryForm();
+        }
+        
+        function clearAddStoryForm() {
+            document.getElementById('newStoryTitle').value = '';
+            document.getElementById('newStoryCover').value = '';
+            document.getElementById('newStoryContent').value = '';
+        }
+        
+        async function deleteStory(id, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除这个故事吗？')) {
+                const story = stories.find(s => s.id === id);
+                
+                if (story && story.coverFilename) {
+                    try {
+                        await fetch(`${API_BASE_URL}/files/${story.coverFilename}`, {
+                            method: 'DELETE'
+                        });
+                        console.log('封面文件已从服务器删除');
+                    } catch (error) {
+                        console.error('删除封面文件失败:', error);
+                    }
+                }
+                
+                stories = stories.filter(s => s.id !== id);
+                saveStories();
+                renderStories();
+            }
+        }
+    </script>
+</body>
+</html>
